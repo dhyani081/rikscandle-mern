@@ -48,7 +48,7 @@ export default function Footer() {
   const telHref = 'tel:' + SUPPORT_PHONE.replace(/[^\d+]/g, '');
 
   return (
-    <footer className="border-t bg-white mt-12">
+    <footer className="border-t bg-white mt-12 bg-gradient-to-br from-amber-50 via-white to-amber-100">
       <div className="container py-10 grid md:grid-cols-4 gap-8">
         {/* Brand */}
         <div>
@@ -63,7 +63,7 @@ export default function Footer() {
 
         {/* Company */}
         <div>
-          <div className="font-semibold text-gray-900">Company</div>
+          <div className="font-bold text-gray-900">Company</div>
           <ul className="mt-3 space-y-2 text-gray-700">
             <li><Link to="/about" className="hover:text-amber-700">About Us</Link></li>
             <li><Link to="/policy/terms" className="hover:text-amber-700">Terms &amp; Conditions</Link></li>
@@ -74,7 +74,7 @@ export default function Footer() {
 
         {/* Social */}
         <div>
-          <div className="font-semibold text-gray-900">Social</div>
+          <div className="font-bold text-gray-900">Social</div>
           <div className="mt-3 flex items-center gap-3">
             <a
               href="https://www.instagram.com/rikscandle"
@@ -117,7 +117,7 @@ export default function Footer() {
 
         {/* Support with icons */}
         <div>
-          <div className="font-semibold text-gray-900">Support</div>
+          <div className="font-bold text-gray-900">Support</div>
           <ul className="mt-3 space-y-3 text-gray-700">
             {/* Email (Gmail compose) */}
             <SupportItem
@@ -150,7 +150,7 @@ export default function Footer() {
             {/* WhatsApp */}
             <SupportItem
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
-              label="WhatsApp us"
+              label="Chat on WhatsApp"
               external
               bg="bg-green-50"
               color="text-green-600"

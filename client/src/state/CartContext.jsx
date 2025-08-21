@@ -1,22 +1,18 @@
 // client/src/state/CartContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-const Ctx = createContext(null);
-export const useCart = () => useContext(Ctx);
-
-const LS_KEY = 'rc:cart';
-
-function normalizeItem(p, qty = 1) {
-  const id = p?.product?._id || p?.product || p?._id || p?.id;
-  const image = p?.image || (Array.isArray(p?.images)
-    ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0]?.url)
-    : '');
-  return { product: id, _id: id, name: p?.name, price: Number(p?.price || 0), qty: Number(qty || 1), image };
-}
+const CartCtx = createContext(null);
+const LS_KEY = 'rk_cart_v1';
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -24,31 +20,40 @@ export function CartProvider({ children }) {
   }, [items]);
 
   const add = (p, qty = 1) => {
-    const ni = normalizeItem(p, qty);
-    if (!ni.product) return;
+    qty = Math.max(1, Number(qty) || 1);
+    const price = Number(p?.price || 0);
+    const image = p?.image || (Array.isArray(p?.images) && p.images[0]?.url) || '';
+
     setItems(prev => {
-      const i = prev.findIndex(x => x.product === ni.product);
-      if (i >= 0) {
-        const copy = prev.slice();
-        copy[i] = { ...copy[i], qty: Number(copy[i].qty) + Number(ni.qty) };
+      const ix = prev.findIndex(x => x._id === p._id);
+      if (ix >= 0) {
+        const copy = [...prev];
+        copy[ix] = { ...copy[ix], qty: (Number(copy[ix].qty) || 0) + qty };
         return copy;
       }
-      return [...prev, ni];
+      return [...prev, { _id: p._id, name: p.name || 'Product', price, image, qty }];
     });
   };
-  const inc = (id) => setItems(prev => prev.map(x => x.product === id ? { ...x, qty: x.qty + 1 } : x));
-  const dec = (id) => setItems(prev => prev.flatMap(x => x.product === id ? (x.qty > 1 ? [{ ...x, qty: x.qty - 1 }] : []) : [x]));
-  const remove = (id) => setItems(prev => prev.filter(x => x.product !== id));
+
+  const remove = (id) => setItems(prev => prev.filter(x => x._id !== id));
+  const changeQty = (id, qty) =>
+    setItems(prev => prev.map(x => x._id === id ? { ...x, qty: Math.max(1, Number(qty) || 1) } : x));
   const clear = () => setItems([]);
 
-  const count = useMemo(() => items.reduce((s, x) => s + Number(x.qty || 0), 0), [items]);
-
-  return (
-    <Ctx.Provider value={{ items, add, inc, dec, remove, clear, count }}>
-      {children}
-    </Ctx.Provider>
+  const subtotal = items.reduce(
+    (s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 0),
+    0
   );
+  const count = items.reduce((s, it) => s + (Number(it.qty) || 0), 0);
+
+  const value = useMemo(() => ({
+    items, add, remove, changeQty, clear, subtotal, count
+  }), [items, subtotal, count]);
+
+  return <CartCtx.Provider value={value}>{children}</CartCtx.Provider>;
 }
 
-// Default export bhi rakho (taaki dono import styles chal sake)
+export const useCart = () => useContext(CartCtx);
+
+// 👇 Add default export so `import CartProvider from './state/CartContext.jsx'` works
 export default CartProvider;

@@ -37,7 +37,7 @@ export default function Terms() {
         Only <strong>broken or defective candles</strong> reported within 7 days with a valid{" "}
         <strong>unboxing video</strong> are eligible for refund or replacement. Used candles
         are <strong>not returnable under any condition</strong>. For full details, please see our{" "}
-        <a href="/refund" className="text-amber-700 underline">
+        <a href="" className="text-amber-700">
           Refund & Returns Policy
         </a>.
       </p>

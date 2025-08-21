@@ -9,7 +9,7 @@ export default function About() {
   return (
     <div className="bg-white">
       {/* ===== Top hero: text left + BIG logo right ===== */}
-      <section className="bg-gradient-to-b from-amber-50 to-white border-b">
+      <section className="bg-gradient-to-b from-amber-50  border-b via-white to-amber-300">
         <div className="container py-12 md:py-16 grid md:grid-cols-2 gap-8 items-center">
           <div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-amber-800">
@@ -42,9 +42,9 @@ export default function About() {
 
       {/* ===== Our story ===== */}
       <section className="container py-10 md:py-14">
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid md:grid-cols-2 gap-8 items-start ">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Our Story</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Our Story</h2>
             <p className="mt-3 text-gray-600">
               RiksCandle ki shuruat ek chhoti si kitchen‑table experiment se hui—friends & family ko pasand aayi
               fragrance blends ko perfect karte‑karte ye brand bana. Aaj bhi hum wahi approach follow karte hain:
@@ -59,7 +59,7 @@ export default function About() {
 
           {/* Values card */}
           <div className="rounded-lg border p-6 bg-amber-50/40">
-            <h3 className="text-lg font-semibold text-amber-800">What We Stand For</h3>
+            <h3 className="text-lg font-bold text-amber-800">What We Stand For</h3>
             <ul className="mt-3 space-y-2 text-gray-700 list-disc pl-5">
               <li><span className="font-medium">Hand‑poured precision</span> — small‑batch quality in every jar.</li>
               <li><span className="font-medium">Clean ingredients</span> — premium wax & skin‑safe scents.</li>
@@ -74,7 +74,7 @@ export default function About() {
       {/* ===== How we craft ===== */}
       <section className="bg-amber-50/30 border-y">
         <div className="container py-10 md:py-14">
-          <h2 className="text-xl font-semibold text-gray-900">How We Craft Your Candles</h2>
+          <h2 className="text-2xl font-bold text-gray-900">How We Craft Your Candles</h2>
           <div className="mt-5 grid md:grid-cols-4 gap-4">
             {[
               ['Blend', 'Fragrance oils ko right wax ke saath measured heat par blend kiya jata hai.'],
@@ -96,7 +96,7 @@ export default function About() {
       <section className="container py-10 md:py-14">
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <h2 className="text-xl font-semibold text-gray-900">Our Promise</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Our Promise</h2>
             <p className="mt-3 text-gray-600">
               Aapke ghar ki vibe humari responsibility hai. Isliye hum har order ko personally check karte hain.
               Koi issue ho? <span className="font-medium">No‑hassle support</span>—hum turant fix karte hain.
@@ -111,7 +111,7 @@ export default function About() {
           </div>
 
           <div className="rounded-lg border p-6 bg-white">
-            <h3 className="text-lg font-semibold text-amber-800">Meet the Team</h3>
+            <h3 className="text-lg font-bold text-amber-800">Meet the Team</h3>
             <p className="mt-2 text-gray-600 text-sm">
               We’re a small founding team—makers first, marketers later. Aap jab bhi RiksCandle jalaate ho,
               you’re supporting local craft & mindful business.

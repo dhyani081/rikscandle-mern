@@ -2,9 +2,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-/**
- * Set JWT cookie on response
- */
 export function signTokenAndSetCookie(res, userId) {
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('jwt', token, {
@@ -16,9 +13,6 @@ export function signTokenAndSetCookie(res, userId) {
   return token;
 }
 
-/**
- * Clear JWT cookie
- */
 export function clearAuthCookie(res) {
   res.clearCookie('jwt', {
     httpOnly: true,
@@ -27,9 +21,6 @@ export function clearAuthCookie(res) {
   });
 }
 
-/**
- * Strict auth (must be logged in)
- */
 export async function protect(req, res, next) {
   try {
     const token =
@@ -51,10 +42,7 @@ export async function protect(req, res, next) {
   }
 }
 
-/**
- * Optional auth (attach user if token present; otherwise continue as guest)
- * Use this for guest-allowed endpoints like "create order"
- */
+// guest allowed, attach user if token available
 export async function maybeAuth(req, res, next) {
   try {
     const token =
@@ -68,23 +56,14 @@ export async function maybeAuth(req, res, next) {
       const user = await User.findById(decoded.id).select('-password');
       if (user) req.user = user;
     }
-  } catch {
-    // ignore token errors for maybeAuth
-  }
+  } catch {}
   next();
 }
 
-/**
- * Admin guard
- */
 export function admin(req, res, next) {
   if (req.user && req.user.isAdmin) return next();
   return res.status(403).json({ message: 'Forbidden' });
 }
 
-/**
- * Backward compatibility:
- * Some routes import { adminOnly } from './auth.js'
- * Provide an alias so older imports keep working.
- */
+// alias for backward compatibility
 export const adminOnly = admin;

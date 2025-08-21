@@ -35,7 +35,7 @@ export default function Refund() {
       <h2>How to Request a Return</h2>
       <p>
         Please email us at{" "}
-        <a href="mailto:support@rikscandle.test">support@rikscandle.test</a>{" "}
+        <a href="mailto:rikscandle@gmail.com">rikscandle@gmail.com</a>{" "}
         with:
       </p>
       <ul>

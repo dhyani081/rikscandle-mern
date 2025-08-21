@@ -1,6 +1,7 @@
 // server/src/controllers/order.controller.js
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import Product from '../models/Product.js';
 import { buildInvoiceBuffer } from '../utils/invoice.js';
 
 const toNumber = (v, d = 0) => {
@@ -24,25 +25,19 @@ const pickProductId = (it = {}) =>
 export const createOrder = async (req, res, next) => {
   try {
     const { items = [], contact = {}, shippingAddress = {}, paymentMethod = 'COD', notes = '' } = req.body || {};
-
     if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: 'No items' });
 
-    // contact required
     if (!contact.name || !contact.email || !contact.phone) {
       return res.status(400).json({ message: 'Contact name, email and phone are required' });
     }
 
-    // shipping required
     const { address = '', city = '', state = '', pin = '' } = shippingAddress || {};
     if (!address || !city || !state || !pin) {
       return res.status(400).json({ message: 'Address, city, state and PIN are required' });
     }
     const pinStr = String(pin).trim();
-    if (!/^\d{6}$/.test(pinStr)) {
-      return res.status(400).json({ message: 'PIN must be a valid 6-digit code' });
-    }
+    if (!/^\d{6}$/.test(pinStr)) return res.status(400).json({ message: 'PIN must be a valid 6-digit code' });
 
-    // normalize items + ensure product id present
     const normItems = items.map((raw, idx) => {
       const prodId = pickProductId(raw);
       if (!prodId) throw Object.assign(new Error(`Cart item ${idx + 1} missing product id`), { status: 400 });
@@ -54,9 +49,7 @@ export const createOrder = async (req, res, next) => {
       return { product: prodId, name: raw.name, price: toNumber(raw.price, 0), qty: toNumber(raw.qty, 1), image: img || '' };
     });
 
-    // --- Link to user ---
-    // 1) If logged-in, use req.user
-    // 2) Else, if contact.email matches an existing account, link to that user (auto-claim)
+    // link to user (logged-in or same email)
     let userId = req.user?._id || req.user?.id || undefined;
     if (!userId && contact?.email) {
       const u = await User.findOne({ email: String(contact.email).toLowerCase() }).select('_id');
@@ -93,15 +86,11 @@ export const getOrders = async (req, res, next) => {
 
 export const getMyOrders = async (req, res, next) => {
   try {
-    // Backfill: guest orders with same email -> attach to logged-in user
+    // backfill guest orders (same email) to this user
     await Order.updateMany(
-      {
-        $or: [{ user: null }, { user: { $exists: false } }],
-        'contact.email': req.user.email
-      },
+      { $or: [{ user: null }, { user: { $exists: false } }], 'contact.email': req.user.email },
       { $set: { user: req.user._id } }
     );
-
     const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) { next(err); }
@@ -121,8 +110,29 @@ export const updateOrder = async (req, res, next) => {
   try {
     const o = await Order.findById(req.params.id);
     if (!o) return res.status(404).json({ message: 'Order not found' });
+
+    const prevStatus = o.status;
     if (typeof req.body.status === 'string') o.status = req.body.status;
     if (typeof req.body.isPaid === 'boolean') o.isPaid = req.body.isPaid;
+
+    // When moving to Delivered for the FIRST time → deduct inventory & bump soldCount
+    if (prevStatus !== 'Delivered' && o.status === 'Delivered') {
+      if (!o.deliveredAt) o.deliveredAt = new Date();
+
+      for (const it of o.items || []) {
+        const qty = Math.max(0, Number(it.qty) || 0);
+        const prodId = it.product;
+        if (!prodId || qty === 0) continue;
+
+        const p = await Product.findById(prodId).select('stock soldCount');
+        if (p) {
+          p.stock = Math.max(0, Number(p.stock || 0) - qty);
+          p.soldCount = Math.max(0, Number(p.soldCount || 0) + qty);
+          await p.save();
+        }
+      }
+    }
+
     await o.save();
     res.json(o);
   } catch (err) { next(err); }

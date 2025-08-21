@@ -1,48 +1,82 @@
 // client/src/state/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../lib/api.js';
+import notify from '../lib/notify.js';
 
-const AuthContext = createContext(null);
+const AuthCtx = createContext(null);
 
-export function AuthProvider({ children }) {
+const firstName = (name = '', email = '') => {
+  const n = (name || email || '').trim();
+  return n.split(' ')[0] || n;
+};
+
+export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Restore session on load
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         const { data } = await api.get('/api/auth/me');
-        setUser(data);
-      } catch {
-        setUser(null);
+        if (mounted) setUser(data);
+      } catch (err) {
+        // 401 = not logged in → ignore quietly
+        if (err?.response?.status !== 401) notify.fromError(err);
+        if (mounted) setUser(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
+    return () => { mounted = false; };
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await api.post('/api/auth/login', { email, password });
-    setUser(data);
-    return data;
+    try {
+      const { data } = await notify.promise(
+        api.post('/api/auth/login', { email, password }),
+        { pending: 'Logging in…', success: 'Welcome back!' }
+      );
+      setUser(data);
+      notify.success(`Hi, ${firstName(data?.name, data?.email)} 👋`);
+      return data;
+    } catch (e) {
+      notify.fromError(e);
+      throw e;
+    }
   };
 
-  const register = async (name, email, password, phone) => {
-    const { data } = await api.post('/api/auth/register', { name, email, password, phone });
-    setUser(data);
-    return data;
+  const register = async (payload) => {
+    try {
+      const { data } = await notify.promise(
+        api.post('/api/auth/register', payload),
+        { pending: 'Creating your account…', success: 'Account created!' }
+      );
+      setUser(data);
+      notify.success(`Welcome, ${firstName(data?.name, data?.email)} 🎉`);
+      return data;
+    } catch (e) {
+      notify.fromError(e);
+      throw e;
+    }
   };
 
   const logout = async () => {
-    await api.post('/api/auth/logout');
+    try {
+      await notify.promise(api.post('/api/auth/logout'), {
+        pending: 'Logging out…',
+        success: 'Logged out',
+      });
+    } catch {}
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthCtx.Provider value={{ user, loading, login, register, logout }}>
       {children}
-    </AuthContext.Provider>
+    </AuthCtx.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthCtx);

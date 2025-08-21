@@ -19,11 +19,11 @@ export default function Hero() {
   const goto = (n) => setI((n + slides.length) % slides.length);
 
   return (
-    <section className="bg-gradient-to-br from-amber-50 via-white to-amber-100">
+    <section className="bg-gradient-to-br from-amber-100 via-white to-amber-300">
       <div className="container py-10 md:py-14 grid md:grid-cols-2 gap-8 items-center">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-amber-800 leading-tight">
-            Hand‑poured <span className="underline decoration-amber-300">Soy Candles</span> for Cozy Nights
+            Hand‑poured <span className=" text-orange-600">Soy Candles</span> for Cozy Nights
           </h1>
           <p className="mt-8 font-semibold text-gray-800">
             Crafted in small batches with natural wax and premium fragrances. Treat your space to warm, comforting aromas.
