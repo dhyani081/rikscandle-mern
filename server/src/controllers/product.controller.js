@@ -1,168 +1,16 @@
-// // server/src/controllers/product.controller.js
-// import Product from '../models/Product.js';
-
-// export const listProducts = async (req, res, next) => {
-//   try {
-//     const {
-//       search = '',
-//       limit = 20,
-//       page = 1,
-//       sort = 'createdAt',
-//       order = 'desc',
-//     } = req.query;
-
-//     const q = {};
-//     if (search) {
-//       q.name = { $regex: String(search), $options: 'i' };
-//     }
-
-//     const sortObj = { [sort]: order === 'asc' ? 1 : -1 };
-//     const lim = Math.min(100, Math.max(1, Number(limit)));
-//     const skip = (Math.max(1, Number(page)) - 1) * lim;
-
-//     const [items, total] = await Promise.all([
-//       Product.find(q).sort(sortObj).skip(skip).limit(lim),
-//       Product.countDocuments(q),
-//     ]);
-
-//     res.json({ items, total, page: Number(page), limit: lim });
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-// export const getProductById = async (req, res, next) => {
-//   try {
-//     const p = await Product.findById(req.params.id);
-//     if (!p) return res.status(404).json({ message: 'Product not found' });
-//     res.json(p);
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-// export const createProduct = async (req, res, next) => {
-//   try {
-//     const {
-//       name,
-//       description,
-//       image,
-//       images,
-//       price,
-//       mrp,
-//       category,
-//       brand,
-//       countInStock,
-//     } = req.body;
-
-//     if (!name || price == null) {
-//       return res.status(400).json({ message: 'Name and price are required' });
-//     }
-
-//     const product = await Product.create({
-//       name,
-//       description,
-//       image,
-//       images,
-//       price: Number(price),
-//       mrp: mrp != null ? Number(mrp) : undefined, // fallback preset in model
-//       category,
-//       brand,
-//       countInStock: Number(countInStock || 0),
-//     });
-
-//     res.status(201).json(product);
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-// export const updateProduct = async (req, res, next) => {
-//   try {
-//     const p = await Product.findById(req.params.id);
-//     if (!p) return res.status(404).json({ message: 'Product not found' });
-
-//     const fields = [
-//       'name',
-//       'description',
-//       'image',
-//       'images',
-//       'price',
-//       'mrp',
-//       'category',
-//       'brand',
-//       'countInStock',
-//     ];
-
-//     for (const f of fields) {
-//       if (req.body[f] !== undefined) {
-//         p[f] = f === 'price' || f === 'mrp' || f === 'countInStock'
-//           ? Number(req.body[f])
-//           : req.body[f];
-//       }
-//     }
-
-//     // If mrp not provided and price changed, ensure mrp defaults
-//     if (req.body.price !== undefined && req.body.mrp === undefined && (p.mrp == null || p.mrp === 0)) {
-//       p.mrp = p.price;
-//     }
-
-//     await p.save();
-//     res.json(p);
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-// export const deleteProduct = async (req, res, next) => {
-//   try {
-//     const p = await Product.findByIdAndDelete(req.params.id);
-//     if (!p) return res.status(404).json({ message: 'Product not found' });
-//     res.json({ message: 'Deleted' });
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-// export const addReview = async (req, res, next) => {
-//   try {
-//     const { rating, comment } = req.body;
-//     const p = await Product.findById(req.params.id);
-//     if (!p) return res.status(404).json({ message: 'Product not found' });
-
-//     // Optional: prevent multiple reviews by same user
-//     const already = p.reviews?.find(r => String(r.user) === String(req.user._id));
-//     if (already) return res.status(400).json({ message: 'Already reviewed' });
-
-//     p.reviews.push({
-//       user: req.user._id,
-//       name: req.user.name,
-//       rating: Number(rating || 0),
-//       comment: comment || '',
-//     });
-//     p.numReviews = p.reviews.length;
-//     p.rating =
-//       p.reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) /
-//       (p.reviews.length || 1);
-
-//     await p.save();
-//     res.status(201).json(p);
-//   } catch (e) {
-//     next(e);
-//   }
-// };
-
-
 // server/src/controllers/product.controller.js
-import Product from '../models/product.model.js';
+import mongoose from 'mongoose';
+import Product from '../models/Product.js';
 
-// GET /api/products
-// Supports both modes:
-//  - Legacy (no page): returns pure array (backward compatible for Home/Admin etc.)
-//  - Paginated (with ?page=): returns {items, page, totalPages, totalItems, ...}
+/**
+ * GET /api/products
+ * Two modes:
+ *  - Legacy (no "page"): returns array of items (backward compatible)
+ *  - Paginated (with "page"): returns { items, page, totalPages, totalItems, ... }
+ */
 export async function listProducts(req, res) {
   const {
-    page,                 // when present -> paginated mode
+    page,           // if present => paginated mode
     limit = 8,
     search = '',
     sort = 'createdAt',
@@ -191,7 +39,7 @@ export async function listProducts(req, res) {
 
   const sortObj = { [sort]: String(order).toLowerCase() === 'asc' ? 1 : -1 };
 
-  // ---- Legacy mode (no page param) -> return plain array ----
+  // ---- Legacy mode (no page) -> return plain array ----
   if (page === undefined) {
     const l = Math.min(Math.max(parseInt(limit) || 8, 1), 100);
     const items = await Product.find(q).sort(sortObj).limit(l);
@@ -220,3 +68,129 @@ export async function listProducts(req, res) {
     hasNext: p < totalPages,
   });
 }
+
+/**
+ * GET /api/products/:id
+ */
+export async function getProduct(req, res) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid product id' });
+  }
+  const p = await Product.findById(id);
+  if (!p) return res.status(404).json({ message: 'Product not found' });
+  res.json(p);
+}
+
+/**
+ * POST /api/products
+ * body: { name, description, price, mrp, stock, image, images[], category }
+ */
+export async function createProduct(req, res) {
+  const { name, description, price, mrp, stock, image, images, category } = req.body;
+
+  if (!name || price == null) {
+    return res.status(400).json({ message: 'Name & price are required' });
+  }
+
+  const doc = new Product({
+    name,
+    description,
+    price: Number(price),
+    mrp: mrp != null ? Number(mrp) : undefined,
+    stock: stock != null ? Number(stock) : undefined,
+    image,
+    images,
+    category,
+  });
+
+  try {
+    const saved = await doc.save();
+    return res.status(201).json(saved);
+  } catch (e) {
+    if (e?.code === 11000) {
+      return res.status(409).json({ message: 'Duplicate key', key: e.keyValue });
+    }
+    throw e;
+  }
+}
+
+/**
+ * PUT /api/products/:id
+ */
+export async function updateProduct(req, res) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid product id' });
+  }
+
+  const update = {};
+  const allowed = ['name', 'description', 'price', 'mrp', 'stock', 'image', 'images', 'category'];
+  for (const k of allowed) {
+    if (k in req.body) update[k] = req.body[k];
+  }
+
+  try {
+    const p = await Product.findByIdAndUpdate(id, update, { new: true, runValidators: true });
+    if (!p) return res.status(404).json({ message: 'Product not found' });
+    res.json(p);
+  } catch (e) {
+    if (e?.code === 11000) {
+      return res.status(409).json({ message: 'Duplicate key', key: e.keyValue });
+    }
+    throw e;
+  }
+}
+
+/**
+ * DELETE /api/products/:id
+ */
+export async function removeProduct(req, res) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid product id' });
+  }
+  const r = await Product.findByIdAndDelete(id);
+  if (!r) return res.status(404).json({ message: 'Product not found' });
+  res.json({ ok: true });
+}
+
+/**
+ * POST /api/products/:id/reviews
+ * body: { rating, comment }
+ * req.user must be set by auth middleware
+ */
+export async function addReview(req, res) {
+  const { id } = req.params;
+  const { rating, comment } = req.body;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid product id' });
+  }
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+
+  // prevent duplicate review by same user
+  const uid = String(req.user?._id || '');
+  const already = (product.reviews || []).find((r) => String(r.user) === uid);
+  if (already) {
+    return res.status(400).json({ message: 'You have already reviewed this product' });
+  }
+
+  product.reviews.push({
+    user: req.user?._id,
+    name: req.user?.name || 'User',
+    rating: Number(rating) || 5,
+    comment: comment || '',
+  });
+
+  product.numReviews = product.reviews.length;
+  product.rating =
+    product.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / (product.numReviews || 1);
+
+  await product.save();
+  res.status(201).json(product);
+}
+
+/* ---- Aliases for older imports (optional but safe) ---- */
+export const getProductById = getProduct;
+export const deleteProduct = removeProduct;
