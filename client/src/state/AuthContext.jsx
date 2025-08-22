@@ -5,31 +5,55 @@ import notify from '../lib/notify.js';
 
 const AuthCtx = createContext(null);
 
+// Show a friendly first name in toasts
 const firstName = (name = '', email = '') => {
   const n = (name || email || '').trim();
   return n.split(' ')[0] || n;
 };
 
+// Normalize Indian mobile: remove +91/leading 0s, keep last 10
+const normalizePhone = (s) => {
+  const digits = String(s || '').replace(/\D/g, '');
+  let p = digits.replace(/^91(?=\d{10,}$)/, '').replace(/^0+/, '');
+  if (p.length > 10) p = p.slice(-10);
+  return p;
+};
+const isValidPhone = (p) => /^\d{10}$/.test(p) && /^[6-9]/.test(p);
+
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session on load
+  // Try a "silent" session endpoint (200 with user or null). If not present, fall back to /me.
+  const restoreSession = async () => {
+    // 1) Preferred: /auth/session (always returns 200)
+    let res = await api.get('/api/auth/session', { validateStatus: () => true }).catch(() => null);
+    if (!res || res.status === 404) {
+      // 2) Fallback: /auth/me (401 when logged out) but don't throw
+      res = await api.get('/api/auth/me', { validateStatus: () => true }).catch(() => null);
+    }
+    if (res && res.status === 200) return res.data || null;
+    return null;
+  };
+
+  // Restore session on load without throwing 401 errors
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const { data } = await api.get('/api/auth/me');
-        if (mounted) setUser(data);
+        const u = await restoreSession();
+        if (mounted) setUser(u);
       } catch (err) {
-        // 401 = not logged in → ignore quietly
-        if (err?.response?.status !== 401) notify.fromError(err);
         if (mounted) setUser(null);
+        // only surface non-401 errors
+        if (err?.response?.status && err.response.status !== 401) notify.fromError(err);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -47,10 +71,23 @@ export default function AuthProvider({ children }) {
     }
   };
 
+  // Expect a single object payload: { name, email, phone, password }
   const register = async (payload) => {
     try {
+      const clean = {
+        name: (payload?.name || '').trim(),
+        email: (payload?.email || '').trim().toLowerCase(),
+        password: payload?.password || '',
+        phone: normalizePhone(payload?.phone),
+      };
+
+      if (!clean.name || !clean.email || !clean.password || !clean.phone || !isValidPhone(clean.phone)) {
+        notify.error('Please enter valid name, email, 10‑digit phone (no +91/0), and password.');
+        throw new Error('client_validation');
+      }
+
       const { data } = await notify.promise(
-        api.post('/api/auth/register', payload),
+        api.post('/api/auth/register', clean),
         { pending: 'Creating your account…', success: 'Account created!' }
       );
       setUser(data);
@@ -68,7 +105,9 @@ export default function AuthProvider({ children }) {
         pending: 'Logging out…',
         success: 'Logged out',
       });
-    } catch {}
+    } catch {
+      // ignore
+    }
     setUser(null);
   };
 
