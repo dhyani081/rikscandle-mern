@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --rc-accent: #b45309; }
+
+.btn { @apply px-4 py-2 rounded font-medium; }
+.btn-primary { @apply bg-amber-600 text-white hover:bg-amber-700; }
+.btn-outline { @apply border border-amber-600 text-amber-700 hover:bg-amber-50; }
+.input { @apply border rounded px-3 py-2 w-full; }
+.card { @apply border rounded-lg p-4 shadow-sm bg-white; }
+.container { @apply max-w-6xl mx-auto px-4; }
+.link { @apply text-amber-700 hover:underline; }
