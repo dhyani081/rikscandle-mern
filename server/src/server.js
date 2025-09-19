@@ -93,15 +93,15 @@ const allowedOrigins = [
   'https://www.rikscandle.com'
 ];
 
-// Force HTTPS in production
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.headers['x-forwarded-proto'] !== 'https') {
-      return res.redirect(301, 'https://' + req.headers.host + req.url);
-    }
-    next();
-  });
-}
+// // Force HTTPS in production
+// if (process.env.NODE_ENV === 'production') {
+//   app.use((req, res, next) => {
+//     if (req.headers['x-forwarded-proto'] !== 'https') {
+//       return res.redirect(301, 'https://' + req.headers.host + req.url);
+//     }
+//     next();
+//   });
+// }
 
 app.use(
   cors({
