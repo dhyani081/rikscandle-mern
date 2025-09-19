@@ -22,7 +22,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 // CORS + cookies
-const allowedOrigins = ['https://rikscandle.com', 'https://rikscandle.in'];
+const allowedOrigins = ['https://rikscandle.com', 'https://rikscandle.in', 'https://www.rikscandle.in', 'https://www.rikscandle.com'];
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
