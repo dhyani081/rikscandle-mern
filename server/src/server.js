@@ -90,7 +90,8 @@ const allowedOrigins = [
   'https://rikscandle.com',
   'https://rikscandle.in',
   'https://www.rikscandle.in',
-  'https://www.rikscandle.com'
+  'https://www.rikscandle.com',
+  'https://rikscandle-frontend.onrender.com'
 ];
 
 // // Force HTTPS in production
