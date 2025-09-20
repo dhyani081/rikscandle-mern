@@ -22,6 +22,14 @@ const app = express();
 app.set('trust proxy', 1);
 
 // CORS + cookies
+const allowedOrigins = [
+  process.env.CLIENT_URL1,
+  process.env.CLIENT_URL2,
+  process.env.CLIENT_URL3,
+  process.env.CLIENT_URL4,
+  process.env.CLIENT_URL5,
+  
+]
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',

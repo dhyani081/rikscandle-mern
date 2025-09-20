@@ -6,7 +6,7 @@ export function signTokenAndSetCookie(res, userId) {
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('jwt', token, {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     secure: process.env.NODE_ENV === 'production',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -16,7 +16,7 @@ export function signTokenAndSetCookie(res, userId) {
 export function clearAuthCookie(res) {
   res.clearCookie('jwt', {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     secure: process.env.NODE_ENV === 'production',
   });
 }
