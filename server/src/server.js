@@ -107,27 +107,33 @@ const app = express();
 app.set('trust proxy', 1);
 
 // CORS Configuration
-const allowedOrigins = [
-  process.env.CLIENT_URL1,
-  process.env.CLIENT_URL2,
-  process.env.CLIENT_URL3,
-  process.env.CLIENT_URL4,
-  process.env.CLIENT_URL5,
-];
+// const allowedOrigins = [
+//   process.env.CLIENT_URL1,
+//   process.env.CLIENT_URL2,
+//   process.env.CLIENT_URL3,
+//   process.env.CLIENT_URL4,
+//   process.env.CLIENT_URL5,
+// ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Check if the origin is in the allowed list or allow localhost in development
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true, // To allow cookies to be sent with requests
-  })
-);
+app.use(cors({
+  origin:"*",
+  method:["GET","POST","PUT","PATCH","DELETE"]
+}
+));
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Check if the origin is in the allowed list or allow localhost in development
+//       if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error('Not allowed by CORS'));
+//       }
+//     },
+//     credentials: true, // To allow cookies to be sent with requests
+//   })
+// );
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
