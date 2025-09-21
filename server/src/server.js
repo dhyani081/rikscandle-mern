@@ -193,25 +193,52 @@ const app = express();
 app.set('trust proxy', 1);
 
 // CORS Configuration
+// const allowedOrigins = [
+//   process.env.CLIENT_URL1,
+//   process.env.CLIENT_URL2,
+//   process.env.CLIENT_URL3,
+//   process.env.CLIENT_URL4,
+//   process.env.CLIENT_URL5,
+// ];
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Check if the origin is in the allowed list or allow localhost in development
+//       if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error('Not allowed by CORS'));
+//       }
+//     },
+//     credentials: true, // To allow cookies to be sent with requests
+//   })
+// );
+
+
 const allowedOrigins = [
   process.env.CLIENT_URL1,
   process.env.CLIENT_URL2,
   process.env.CLIENT_URL3,
   process.env.CLIENT_URL4,
   process.env.CLIENT_URL5,
-];
+  process.env.CLIENT_URL6
+].filter(Boolean); // empty env vars hata dega
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Check if the origin is in the allowed list or allow localhost in development
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      if (!origin) return callback(null, true); // Postman / server-to-server
+
+      // Match against allowed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+
+      console.error("❌ CORS blocked for origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true, // To allow cookies to be sent with requests
+    credentials: true,
   })
 );
 
