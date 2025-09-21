@@ -170,85 +170,86 @@
 //   });
 
 
-  import express from 'express';
-  import dotenv from 'dotenv';
-  import cookieParser from 'cookie-parser';
-  import cors from 'cors';
-  import morgan from 'morgan';
+      import express from 'express';
+      import dotenv from 'dotenv';
+      import cookieParser from 'cookie-parser';
+      import cors from 'cors';
+      import morgan from 'morgan';
 
-  import connectDB from './config/db.js';
+      import connectDB from './config/db.js';
 
-  import authRoutes from './routes/auth.routes.js';
-  import productRoutes from './routes/product.routes.js';
-  import orderRoutes from './routes/order.routes.js';
-  import uploadRoutes from './routes/upload.routes.js';
-  import path from 'path';
-  import { fileURLToPath } from 'url';
+      import authRoutes from './routes/auth.routes.js';
+      import productRoutes from './routes/product.routes.js';
+      import orderRoutes from './routes/order.routes.js';
+      import uploadRoutes from './routes/upload.routes.js';
+      import path from 'path';
+      import { fileURLToPath } from 'url';
 
-  dotenv.config();
+      dotenv.config();
 
-  const app = express();
+      const app = express();
 
-  // trust proxy (prod/CDN/proxy me zaroori; dev me harmless)
-  app.set('trust proxy', 1);
+      // trust proxy (prod/CDN/proxy me zaroori; dev me harmless)
+      app.set('trust proxy', 1);
 
-  // CORS Configuration
- 
+      // CORS Configuration
+    
 
-  const allowedOrigins = [
-  process.env.CLIENT_URL1,
-  process.env.CLIENT_URL2,
-  process.env.CLIENT_URL3,
-  process.env.CLIENT_URL4
-].filter(Boolean)
-.map(u => u.replace(/\/$/, '')); // remove trailing slash
+      const allowedOrigins = [
+      process.env.CLIENT_URL1,
+      process.env.CLIENT_URL2,
+      process.env.CLIENT_URL3,
+      process.env.CLIENT_URL4,
+      process.env.CLIENT_URL5
+    ].filter(Boolean)
+    .map(u => u.replace(/\/$/, '')); // remove trailing slash
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // server-to-server / Postman
+    app.use(
+      cors({
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true); // server-to-server / Postman
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+          if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
 
-      console.warn("❌ CORS blocked for origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true, // allow cookies to be sent
-  })
-);
+          console.warn("❌ CORS blocked for origin:", origin);
+          return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true, // allow cookies to be sent
+      })
+    );
 
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
 
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true }));
-  app.use(cookieParser());
-  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+      app.use(express.json({ limit: '2mb' }));
+      app.use(express.urlencoded({ extended: true }));
+      app.use(cookieParser());
+      app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-  if (process.env.NODE_ENV !== 'production') app.use(morgan('dev'));
+      if (process.env.NODE_ENV !== 'production') app.use(morgan('dev'));
 
-  // Connect DB and then start the server
-  connectDB()
-    .then(() => {
-      app.get('/api/health', (req, res) => res.json({ ok: true }));
+      // Connect DB and then start the server
+      connectDB()
+        .then(() => {
+          app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-      app.use('/api/auth', authRoutes);
-      app.use('/api/products', productRoutes);
-      app.use('/api/orders', orderRoutes);
-      app.use('/api/uploads', uploadRoutes);
+          app.use('/api/auth', authRoutes);
+          app.use('/api/products', productRoutes);
+          app.use('/api/orders', orderRoutes);
+          app.use('/api/uploads', uploadRoutes);
 
-      app.use((req, res) => res.status(404).json({ message: 'Not Found' }));
-      app.use((err, req, res, next) => {
-        console.error(err);
-        res.status(500).json({ message: err.message || 'Server error' });
-      });
+          app.use((req, res) => res.status(404).json({ message: 'Not Found' }));
+          app.use((err, req, res, next) => {
+            console.error(err);
+            res.status(500).json({ message: err.message || 'Server error' });
+          });
 
-      const port = process.env.PORT || 5000;
-      app.listen(port, () => console.log(`RiksCandle server running on port ${port}`));
-    })
-    .catch((err) => {
-      console.error('DB connection failed:', err?.message || err);
-      process.exit(1);
-    });
+          const port = process.env.PORT || 5000;
+          app.listen(port, () => console.log(`RiksCandle server running on port ${port}`));
+        })
+        .catch((err) => {
+          console.error('DB connection failed:', err?.message || err);
+          process.exit(1);
+        });
