@@ -25,15 +25,30 @@ export default function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // Try a "silent" session endpoint (200 with user or null). If not present, fall back to /me.
+  // const restoreSession = async () => {
+  //   // 1) Preferred: /auth/session (always returns 200)
+  //   let res = await api.get('/api/auth/session', { validateStatus: () => true }).catch(() => null);
+  //   if (!res || res.status === 404) {
+  //     // 2) Fallback: /auth/me (401 when logged out) but don't throw
+  //     res = await api.get('/api/auth/me', { validateStatus: () => true }).catch(() => null);
+  //   }
+  //   if (res && res.status === 200) return res.data || null;
+  //   return null;
+  // };
+
+
+   // Restore session on load using only /me (remove /session call)
   const restoreSession = async () => {
-    // 1) Preferred: /auth/session (always returns 200)
-    let res = await api.get('/api/auth/session', { validateStatus: () => true }).catch(() => null);
-    if (!res || res.status === 404) {
-      // 2) Fallback: /auth/me (401 when logged out) but don't throw
-      res = await api.get('/api/auth/me', { validateStatus: () => true }).catch(() => null);
+    try {
+      const res = await api.get('/api/auth/me', { 
+        validateStatus: () => true,
+        withCredentials: true // <--- important for cookie-based auth
+      });
+      if (res.status === 200) return res.data || null;
+      return null;
+    } catch {
+      return null;
     }
-    if (res && res.status === 200) return res.data || null;
-    return null;
   };
 
   // Restore session on load without throwing 401 errors
@@ -59,7 +74,7 @@ export default function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const { data } = await notify.promise(
-        api.post('/api/auth/login', { email, password }),
+        api.post('/api/auth/login', { email, password }, {withCredentials: true}),
         { pending: 'Logging in…', success: 'Welcome back!' }
       );
       setUser(data);
@@ -87,7 +102,7 @@ export default function AuthProvider({ children }) {
       }
 
       const { data } = await notify.promise(
-        api.post('/api/auth/register', clean),
+        api.post('/api/auth/register', clean, { withCredentials: true }),
         { pending: 'Creating your account…', success: 'Account created!' }
       );
       setUser(data);
@@ -101,12 +116,12 @@ export default function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await notify.promise(api.post('/api/auth/logout'), {
+      await notify.promise(api.post('/api/auth/logout', {}, { withCredentials: true }), {
         pending: 'Logging out…',
         success: 'Logged out',
       });
     } catch {
-      // ignore
+      setUser(null);
     }
     setUser(null);
   };
