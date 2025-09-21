@@ -200,7 +200,8 @@
       process.env.CLIENT_URL2,
       process.env.CLIENT_URL3,
       process.env.CLIENT_URL4,
-      process.env.CLIENT_URL5
+      process.env.CLIENT_URL5,
+      process.env.CLIENT_URL6
     ].filter(Boolean)
     .map(u => u.replace(/\/$/, '')); // remove trailing slash
 
