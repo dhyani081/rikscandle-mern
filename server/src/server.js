@@ -231,6 +231,18 @@
 
       if (process.env.NODE_ENV !== 'production') app.use(morgan('dev'));
 
+      // --- Helper for setting cookies ---
+app.setCookie = (res, name, value, options = {}) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+    sameSite: 'None', // cross-site cookies
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    ...options
+  };
+  res.cookie(name, value, cookieOptions);
+};
+
       // Connect DB and then start the server
       connectDB()
         .then(() => {
